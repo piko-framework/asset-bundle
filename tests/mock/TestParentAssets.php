@@ -1,7 +1,7 @@
 <?php
-namespace tests\mock;
+namespace Piko\Tests\mock;
 
-class TestParentAssets extends \piko\AssetBundle
+class TestParentAssets extends \Piko\AssetBundle
 {
     public $name = 'test-parent';
 

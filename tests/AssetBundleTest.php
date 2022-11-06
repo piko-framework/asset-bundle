@@ -1,10 +1,8 @@
 <?php
 use PHPUnit\Framework\TestCase;
-
-use piko\Piko;
-use tests\mock\TestAssets;
-use tests\mock\WrongAssets;
-use piko\Application;
+use Piko\Tests\mock\TestAssets;
+use Piko \Tests\mock\WrongAssets;
+use Piko\Application;
 
 class AssetBundleTest extends TestCase
 {
@@ -28,13 +26,18 @@ class AssetBundleTest extends TestCase
 
     public function setUp(): void
     {
-        $this->application = new Application(['baseUrl' => '']);
+        $this->application = new Application([
+            'baseUrl' => '',
+            'components' => [
+                'Piko\View' => []
+            ]
+        ]);
         Piko::setAlias('@webroot', static::PUBLIC_DIR);
     }
 
     public function testBundle()
     {
-        $view = $this->application->getView();
+        $view = $this->application->getComponent('Piko\View');
 
         $bundle = TestAssets::register($view);
         $this->assertEquals(1, $bundle->registrationCount);
@@ -67,7 +70,7 @@ class AssetBundleTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Src: ' . (new WrongAssets())->sourcePath . ' does not exists.');
 
-        $view = $this->application->getView();
+        $view = $this->application->getComponent('Piko\View');
         WrongAssets::register($view);
     }
 }

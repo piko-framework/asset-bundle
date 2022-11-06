@@ -1,7 +1,9 @@
 <?php
-namespace tests\mock;
+namespace Piko\Tests\mock;
 
-class TestAssets extends \piko\AssetBundle
+use Piko\AssetBundle\Event\BeforeRegisterEvent;
+
+class TestAssets extends \Piko\AssetBundle
 {
     public $name = 'test';
 
@@ -21,11 +23,11 @@ class TestAssets extends \piko\AssetBundle
 
     public $registrationCount = 0;
 
-    protected function init(): void
+    public function __construct()
     {
-        $this->on('register', function($className, $bundle) {
-            if ($bundle instanceof TestAssets) {
-                $bundle->registrationCount++;
+        $this->on(BeforeRegisterEvent::class, function(BeforeRegisterEvent $event) {
+            if ($event->bundle instanceof TestAssets) {
+                $event->bundle->registrationCount++;
             }
         });
     }

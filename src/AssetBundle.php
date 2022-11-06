@@ -10,17 +10,19 @@
 
 declare(strict_types=1);
 
-namespace piko;
+namespace Piko;
 
-use RuntimeException;
+use Piko\AssetBundle\Event\BeforeRegisterEvent;
 
 /**
  * AssetBundle represents a collection of CSS files and JS files to publish inside the public path.
  *
  * @author Sylvain PHILIP <contact@sphilip.com>
  */
-abstract class AssetBundle extends Component
+abstract class AssetBundle
 {
+    use EventHandlerTrait;
+
     /**
      * The bundle name. (eg. jquery, bootstrap, etc.)
      *
@@ -95,21 +97,25 @@ abstract class AssetBundle extends Component
      * @param View $view the view to be registered with
      * @return AssetBundle the registered asset bundle instance
      */
-    public static function register($view): AssetBundle
+    public static function register(View $view): AssetBundle
     {
-        $className = get_called_class();
+        $className = \get_called_class();
+
+        // https://github.com/phpstan/phpstan/issues/4061
         $bundle = new $className(); // @phpstan-ignore-line
 
         if (isset(static::$assetBundles[$className])) {
             return static::$assetBundles[$className];
         }
 
-        $bundle->trigger('register', [$className, $bundle]);
+        $event = $bundle->trigger(new BeforeRegisterEvent($bundle));
 
-        static::$assetBundles[$className] = $bundle;
+        assert($event instanceof BeforeRegisterEvent);
+
+        static::$assetBundles[\get_class($event->bundle)] = $event->bundle;
 
         foreach ($bundle->dependencies as $class) {
-            call_user_func($class . '::register', $view); // @phpstan-ignore-line
+            \call_user_func($class . '::register', $view); // @phpstan-ignore-line
         }
 
         $bundle->publish();
@@ -119,7 +125,7 @@ abstract class AssetBundle extends Component
                 return $file;
             }
 
-            return Piko::getAlias($bundle->publishedBaseUrl) . '/' . $bundle->name . '/' . $file;
+            return \Piko::getAlias($bundle->publishedBaseUrl) . '/' . $bundle->name . '/' . $file;
         };
 
         foreach ($bundle->css as $cssFile) {
@@ -140,10 +146,10 @@ abstract class AssetBundle extends Component
      */
     public function publish(): void
     {
-        if (!empty($this->sourcePath) && !file_exists(Piko::getAlias($this->publishedBasePath) . '/' . $this->name)) {
+        if (!empty($this->sourcePath) && !file_exists(\Piko::getAlias($this->publishedBasePath) . '/' . $this->name)) {
             $this->copy(
-                (string) Piko::getAlias($this->sourcePath),
-                (string) Piko::getAlias($this->publishedBasePath) . '/' . $this->name
+                (string) \Piko::getAlias($this->sourcePath),
+                (string) \Piko::getAlias($this->publishedBasePath) . '/' . $this->name
             );
         }
     }
@@ -154,30 +160,31 @@ abstract class AssetBundle extends Component
      * @param string $src The source directory to copy
      * @param string $dest The destination directory to copy
      * @return void
+     * @throws \RuntimeException if src not exists
      */
     protected function copy($src, $dest)
     {
-        if (!file_exists($src)) {
-            throw new RuntimeException("Src: $src does not exists.");
+        if (!\file_exists($src)) {
+            throw new \RuntimeException(sprintf('Src: %s does not exists.', $src));
         }
 
-        $dir = opendir($src);
+        $dir = \opendir($src);
 
-        if (is_resource($dir)) {
-            mkdir($dest, 0755, true);
+        if (\is_resource($dir)) {
+            \mkdir($dest, 0755, true);
 
-            while (false !== ($file = readdir($dir))) {
+            while (false !== ($file = \readdir($dir))) {
 
                 if (( $file != '.' ) && ( $file != '..' )) {
-                    if (is_dir($src . '/' . $file)) {
+                    if (\is_dir($src . '/' . $file)) {
                         $this->copy($src . '/' . $file, $dest . '/' . $file);
                     } else {
-                        copy($src . '/' . $file, $dest . '/' . $file);
+                        \copy($src . '/' . $file, $dest . '/' . $file);
                     }
                 }
             }
 
-            closedir($dir);
+            \closedir($dir);
         }
     }
 }

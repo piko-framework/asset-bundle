@@ -1,7 +1,7 @@
 <?php
-namespace tests\mock;
+namespace Piko\Tests\mock;
 
-class WrongAssets extends \piko\AssetBundle
+class WrongAssets extends \Piko\AssetBundle
 {
     public $name = 'wrong';
 
