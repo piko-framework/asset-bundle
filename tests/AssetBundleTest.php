@@ -1,7 +1,7 @@
 <?php
 use PHPUnit\Framework\TestCase;
 use Piko\Tests\mock\TestAssets;
-use Piko \Tests\mock\WrongAssets;
+use Piko\Tests\mock\WrongAssets;
 use Piko\Application;
 
 class AssetBundleTest extends TestCase
